@@ -1,7 +1,7 @@
 import numpy as np
 from pydrake.all import (Variable, MathematicalProgram,
                          OsqpSolver, Solve, SnoptSolver, eq)
-from pydrake.solvers import branch_and_bound, gurobi
+from pydrake.solvers import MixedIntegerBranchAndBound, GurobiSolver
 import pydrake.symbolic as sym
 import time
 import dynamics
