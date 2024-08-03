@@ -37,7 +37,7 @@ def linear_optimization(env, x_ref, x_bar, u_bar, x0, N, dt):
         prog, dvs, env.obstacles, buffer, N)
     prog = add_costs(prog, dvs, env, x_ref, Q, R, N)
 
-    solver = gurobi.GurobiSolver()
+    solver = GurobiSolver()
     # solver.AcquireLicense()
     result = solver.Solve(prog)
     # assert(result.is_success), "Optimization Failed"
