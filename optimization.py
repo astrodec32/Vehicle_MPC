@@ -1,7 +1,7 @@
 import numpy as np
 from pydrake.all import (Variable, MathematicalProgram,
                          OsqpSolver, Solve, SnoptSolver, eq)
-from pydrake.solvers import MixedIntegerBranchAndBound, GurobiSolver
+from pydrake.solvers import MixedIntegerBranchAndBound, GurobiSolver, MosekSolver
 import pydrake.symbolic as sym
 import time
 import dynamics
@@ -37,7 +37,8 @@ def linear_optimization(env, x_ref, x_bar, u_bar, x0, N, dt):
         prog, dvs, env.obstacles, buffer, N)
     prog = add_costs(prog, dvs, env, x_ref, Q, R, N)
 
-    solver = GurobiSolver()
+    #solver = GurobiSolver()
+    solver = MosekSolver()
     # solver.AcquireLicense()
     result = solver.Solve(prog)
     # assert(result.is_success), "Optimization Failed"
