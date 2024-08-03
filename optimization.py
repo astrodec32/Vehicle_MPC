@@ -38,7 +38,7 @@ def linear_optimization(env, x_ref, x_bar, u_bar, x0, N, dt):
     prog = add_costs(prog, dvs, env, x_ref, Q, R, N)
 
     #solver = GurobiSolver()
-    #solver = MosekSolver()
+    mosek = MosekSolver()
     # solver.AcquireLicense()
     result = mosek.Solve(prog)
     # assert(result.is_success), "Optimization Failed"
