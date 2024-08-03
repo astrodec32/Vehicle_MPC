@@ -42,7 +42,7 @@ def linear_optimization(env, x_ref, x_bar, u_bar, x0, N, dt):
     # solver.AcquireLicense()
     result = mosek.Solve(prog)
     # assert(result.is_success), "Optimization Failed"
-    status = result.get_solver_details().optimization_status
+    status = result.solution_status().optimization_status
     assert(status == 2), "Optimization failed with code: " + str(status)
 
     x, u, z, v = dvs
