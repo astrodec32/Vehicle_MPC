@@ -1,6 +1,7 @@
 import numpy as np
 from matplotlib import pyplot as plt
-from matplotlib import animation, rc, patches
+from matplotlib import animation, rc
+from matplotlib.patches import Rectangle
 import environment
 import scenarios
 import trajectory_gen
@@ -114,7 +115,7 @@ def animate(env, ctrl_pts, bc_headings, v, dt, x_ref, history, shape='rect'):
         a2 = np.arctan2(wd, ld)
         diag = np.sqrt(ld**2 + wd**2)
         heading = np.rad2deg(np.arctan2((y0s[1]-y0s[0]), (x0s[1]-x0s[0])))
-        vehicle = patches.Rectangle(
+        vehicle = Rectangle(
             (x0s[0]-ld, y0s[0]-wd), 2*ld, 2*wd, angle=-heading, fc='none', lw=1, ec='k')
     elif shape == 'airplane':
         heading = np.arctan2((y0s[1]-y0s[0]), (x0s[1]-x0s[0]))
