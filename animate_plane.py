@@ -8,7 +8,6 @@ import trajectory_gen
 # Set jshtml default mode for notebook use
 rc('animation', html='jshtml')
 
-
 def plot_one_step(env, x_ref, x_bar, x_opt, x_next=None, nominals=None):
     ''' Plots a single step of trajectory optimization in environment '''
     fig, ax = environment.plot_environment(env, figsize=(16, 10))
@@ -29,7 +28,6 @@ def plot_one_step(env, x_ref, x_bar, x_opt, x_next=None, nominals=None):
     handles = [handles[i] for i in ids]
     ax.legend(handles, labels, loc='best')
     return fig, ax
-
 
 def plot_all_steps(env, x_ref_full, history):
     ''' Plots optimization paths in environment at each step over time
@@ -54,7 +52,6 @@ def plot_all_steps(env, x_ref_full, history):
     ax.legend(handles, labels, loc='best')
     return fig, ax
 
-
 def animate(env, ctrl_pts, bc_headings, v, dt, x_ref, history, shape='rect'):
 
     fig, ax = environment.plot_environment(env, figsize=(16, 10))
@@ -73,6 +70,45 @@ def animate(env, ctrl_pts, bc_headings, v, dt, x_ref, history, shape='rect'):
     act_line, = ax.plot([], [], '-o', lw=3, markersize=6,
                         color='blueviolet', label='actual trajectory')
 
+    def draw_airplane(ax, position=(0, 0), heading=0, scale=1.0):
+        # Define the dimensions of the airplane components
+        fuselage_h, fuselage_w = 0.5 * scale, 0.2 * scale
+        wing_h, wing_w = 0.1 * scale, 0.2 * scale
+        tail_h, tail_w = 0.1 * scale, 0.2 * scale
+
+        # Calculate the rotation matrix
+        R = np.array([
+            [np.cos(heading), -np.sin(heading)],
+            [np.sin(heading), np.cos(heading)]
+        ])
+
+        # Define the positions of each component relative to the fuselage center
+        fuselage_pos = np.array([0, 0])
+        left_wing_pos = np.array([-(fuselage_w/2+wing_w), -wing_h/2])
+        right_wing_pos = np.array([fuselage_w/2, -wing_h/2])
+        tail_pos = np.array([-tail_w/2, -(fuselage_h/2+tail_h/2)])
+
+        # Rotate and translate each component
+        def transform(pos):
+            return np.dot(R, pos) + np.array(position)
+
+        fuselage_pos = transform(fuselage_pos) - np.array([fuselage_w / 2, fuselage_h / 2])
+        left_wing_pos = transform(left_wing_pos)
+        right_wing_pos = transform(right_wing_pos)
+        tail_pos = transform(tail_pos)
+
+        # Create and add the rectangles
+        fuselage = Rectangle(fuselage_pos, fuselage_w, fuselage_h, angle=np.degrees(heading), rotation_point='center', edgecolor='k', fill=None)
+        left_wing = Rectangle(left_wing_pos, wing_w, wing_h, angle=np.degrees(heading), rotation_point='center', edgecolor='k', fill=None)
+        right_wing = Rectangle(right_wing_pos, wing_w, wing_h, angle=np.degrees(heading), rotation_point='center', edgecolor='k', fill=None)
+        tail = Rectangle(tail_pos, tail_w, tail_h, angle=np.degrees(heading), rotation_point='center', edgecolor='k', fill=None)
+
+        # Add the components to the plot
+        ax.add_patch(fuselage)
+        ax.add_patch(left_wing)
+        ax.add_patch(right_wing)
+        ax.add_patch(tail)
+
     if shape == 'rect':
         ld, wd = 0.5, 0.2
         a2 = np.arctan2(wd, ld)
@@ -81,22 +117,13 @@ def animate(env, ctrl_pts, bc_headings, v, dt, x_ref, history, shape='rect'):
         vehicle = patches.Rectangle(
             (x0s[0]-ld, y0s[0]-wd), 2*ld, 2*wd, angle=-heading, fc='none', lw=1, ec='k')
     elif shape == 'airplane':
-        # Define the airplane polygon (a simple representation)
-        airplane_shape = np.array([
-            [-0.5, 0],   # Tail
-            [0, 0.5],    # Left wing
-            [0.5, 0],    # Nose
-            [0, -0.5],   # Right wing
-            [-0.5, 0]    # Back to tail
-        ])
-        vehicle = patches.Polygon(airplane_shape, closed=True, fill=None, edgecolor='k')
+        heading = np.arctan2((y0s[1]-y0s[0]), (x0s[1]-x0s[0]))
+        draw_airplane(ax, position=(x0s[0], y0s[0]), heading=heading, scale=1.0)
 
     def init():
         opt_line.set_data([], [])
         act_line.set_data([], [])
         nom_line.set_data([], [])
-        if shape in ['rect', 'airplane']:
-            ax.add_patch(vehicle)
         return opt_line,
 
     def step(i):
@@ -107,24 +134,19 @@ def animate(env, ctrl_pts, bc_headings, v, dt, x_ref, history, shape='rect'):
         opt_line.set_data(x, y)
         act_line.set_data(x0s[:i], y0s[:i])
         nom_line.set_data(xbar, ybar)
-        if shape in ['rect', 'airplane']:
+        if shape == 'rect':
             if (len(x) == 1):
                 heading = bc_headings[1]
             else:
                 heading = np.arctan2((y[1]-y[0]), (x[1]-x[0]))
-            if shape == 'rect':
-                xoff = diag*np.cos(heading + a2)
-                yoff = diag*np.sin(heading + a2)
-                vehicle.set_xy((x[0] - xoff, y[0] - yoff))
-                vehicle.angle = np.rad2deg(heading)
-            elif shape == 'airplane':
-                # Rotate the airplane shape and update its position
-                R = np.array([
-                    [np.cos(heading), -np.sin(heading)],
-                    [np.sin(heading), np.cos(heading)]
-                ])
-                rotated_shape = np.dot(airplane_shape, R.T)
-                vehicle.set_xy(rotated_shape + np.array([x[0], y[0]]))
+            xoff = diag*np.cos(heading + a2)
+            yoff = diag*np.sin(heading + a2)
+            vehicle.set_xy((x[0] - xoff, y[0] - yoff))
+            vehicle.angle = np.rad2deg(heading)
+        elif shape == 'airplane':
+            ax.patches = []  # Clear the previous patches
+            heading = np.arctan2((y[1]-y[0]), (x[1]-x[0]))
+            draw_airplane(ax, position=(x[0], y[0]), heading=heading, scale=1.0)
 
         return opt_line,
 
@@ -135,7 +157,6 @@ def animate(env, ctrl_pts, bc_headings, v, dt, x_ref, history, shape='rect'):
     ax.legend()
     plt.close()
     return anim
-
 
 if __name__ == "__main__":
 
