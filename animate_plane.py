@@ -83,18 +83,11 @@ def animate(env, ctrl_pts, bc_headings, v, dt, x_ref, history, shape='rect'):
     elif shape == 'airplane':
         # Define the airplane polygon (a simple representation)
         airplane_shape = np.array([
-            [0, 0],  # Tail
-            [1, 0],  # Tail to Body
-            [1, 0.5],  # Body to Wing
-            [2, 0],  # Wing Tip
-            [1, -0.5],  # Wing to Body
-            [1, 0],  # Body to Nose
-            [3, 0],  # Nose
-            [1, 0],  # Nose to Body
-            [1, 0.5],  # Body to Opposite Wing
-            [2, 0],  # Wing Tip
-            [1, -0.5],  # Wing to Body
-            [1, 0],  # Body to Tail
+            [-0.5, 0],   # Tail
+            [0, 0.5],    # Left wing
+            [0.5, 0],    # Nose
+            [0, -0.5],   # Right wing
+            [-0.5, 0]    # Back to tail
         ])
         vehicle = patches.Polygon(airplane_shape, closed=True, fill=None, edgecolor='k')
 
@@ -125,9 +118,13 @@ def animate(env, ctrl_pts, bc_headings, v, dt, x_ref, history, shape='rect'):
                 vehicle.set_xy((x[0] - xoff, y[0] - yoff))
                 vehicle.angle = np.rad2deg(heading)
             elif shape == 'airplane':
-                transform = patches.Affine2D().rotate_around(vehicle.xy[0][0], vehicle.xy[0][1], heading)
-                vehicle.set_transform(transform + ax.transData)
-                vehicle.set_xy((x[0], y[0]))
+                # Rotate the airplane shape and update its position
+                R = np.array([
+                    [np.cos(heading), -np.sin(heading)],
+                    [np.sin(heading), np.cos(heading)]
+                ])
+                rotated_shape = np.dot(airplane_shape, R.T)
+                vehicle.set_xy(rotated_shape + np.array([x[0], y[0]]))
 
         return opt_line,
 
